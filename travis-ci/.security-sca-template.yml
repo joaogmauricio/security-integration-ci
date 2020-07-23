@@ -1,0 +1,32 @@
+services:
+  - docker
+
+jobs:
+  allow_failures:
+    - if: env(ALLOW_FAILURES) != false
+  include:
+    - stage: sca
+      script: docker run -v $(pwd):/app -e TRAVIS_JOB_NAME thefriendlypirate/node run --from=travis-ci
+      install: skip
+      name: "yarn-audit"
+      if: language == node_js
+    - script: docker run -v $(pwd):/app -e TRAVIS_JOB_NAME thefriendlypirate/node run --from=travis-ci
+      install: skip
+      name: "npm-audit"
+      if: language == node_js
+    - script: docker run -v $(pwd):/app thefriendlypirate/safety run --from=travis-ci
+      install: skip
+      name: "safety"
+      if: language == python
+    - script: docker run -v $(pwd):/app thefriendlypirate/symfony-securitycheck run --from=travis-ci
+      install: skip
+      name: "symfony-securitycheck"
+      if: language == php
+    - script: docker run -v $(pwd):/app thefriendlypirate/bundler-audit run --from=travis-ci
+      install: skip
+      name: "bundler-audit"
+      if: language == ruby
+    - script: docker run -v $(pwd):/app -e TRAVIS_REPO_SLUG thefriendlypirate/dependency-check run --from=travis-ci
+      install: skip
+      before_script: rm -Rf ./node_modules
+      name: "dependency-check"

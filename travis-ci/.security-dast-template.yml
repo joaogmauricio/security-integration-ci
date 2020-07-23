@@ -1,0 +1,28 @@
+services:
+  - docker
+
+jobs:
+  allow_failures:
+    - if: env(ALLOW_FAILURES) != false
+  include:
+    - stage: dast
+      script: docker run -v $(pwd):/app thefriendlypirate/kubesec run --from=travis-ci
+      install: skip
+      name: "kubesec"
+      if: env(USE_KUBESEC) == true
+    - script: docker run -e SEC_DAST_TARGET_URL thefriendlypirate/zaproxy run --from=travis-ci
+      install: skip
+      name: "zaproxy"
+      if: env(USE_ZAPROXY) == true AND env(SEC_DAST_TARGET_URL) IS present
+    - script: docker run -e SEC_DAST_TARGET_URL thefriendlypirate/ssllabs-scan run --from=travis-ci
+      install: skip
+      name: "ssllabsscan"
+      if: (env(NO_INTERNET) IS NOT present OR env(NO_INTERNET) == false) AND env(SEC_DAST_TARGET_URL) IS present
+    - script: docker run -e SEC_DAST_TARGET_URL thefriendlypirate/testssl run --from=travis-ci
+      install: skip
+      name: "testssl"
+      if: env(NO_INTERNET) == true AND env(SEC_DAST_TARGET_URL) IS present
+    - script: docker run -e SEC_DAST_TARGET_URL thefriendlypirate/securityheaders run --from=travis-ci
+      install: skip
+      name: "securityheaders"
+      if: env(SEC_DAST_TARGET_URL) IS present

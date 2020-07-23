@@ -1,0 +1,21 @@
+services:
+  - docker
+
+jobs:
+  allow_failures:
+    - if: env(ALLOW_FAILURES) != false
+  include:
+    - stage: sast
+      script: docker run -v $(pwd):/app thefriendlypirate/nodejsscancli run --from=travis-ci
+      install: skip
+      before_script: rm -Rf ./node_modules
+      name: "nodejsscan"
+      if: language == node_js
+    - script: docker run -v $(pwd):/app thefriendlypirate/bandit run --from=travis-ci
+      install: skip
+      name: "bandit"
+      if: language == python
+    - script: docker run -v $(pwd):/app -e VERACODE_ID -e VERACODE_KEY -e VERACODE_SANDBOXNAME -e VERACODE_APPNAME -e VERACODE_PACKAGE -e VERACODE_SCANVERSION thefriendlypirate/veracode-scanner run --from=travis-ci
+      install: skip
+      name: "veracode"
+      if: env(USE_VERACODE) == true

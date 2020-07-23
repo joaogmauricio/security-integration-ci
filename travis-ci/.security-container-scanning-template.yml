@@ -1,0 +1,16 @@
+services:
+  - docker
+
+jobs:
+  allow_failures:
+    - if: env(ALLOW_FAILURES) != false
+  include:
+    - stage: container-scanner
+      script: docker run -e DOCKLE_INSECURE -e DOCKLE_USE_PRIVATE_REGISTRY -e DOCKLE_REGISTRY -e DOCKLE_REGISTRY_USER -e DOCKLE_REGISTRY_PASSWORD -e DOCKLE_IMAGE_URL thefriendlypirate/dockle run --from=travis-ci
+      install: skip
+      name: "dockle"
+      if: env(DOCKLE_IMAGE_URL) IS present OR env(DOCKER_IMAGE_URL) IS present
+    - script: docker run -e TRIVY_USERNAME -e TRIVY_PASSWORD -e DOCKER_IMAGE_URL thefriendlypirate/trivy run --from=travis-ci
+      install: skip
+      name: "trivy"
+      if: env(DOCKER_IMAGE_URL) IS present
