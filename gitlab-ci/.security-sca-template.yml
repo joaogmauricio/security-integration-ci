@@ -1,0 +1,72 @@
+variables:
+  SEC_NODE_IMAGE: thefriendlypirate/node:latest
+  SEC_SAFETY_IMAGE: thefriendlypirate/safety:latest
+  SEC_SYMFONYSECURITYCHECK_IMAGE: thefriendlypirate/symfony-securitycheck:latest
+  SEC_BUNDLERAUDIT_IMAGE: thefriendlypirate/bundler-audit:latest
+  SEC_DEPENDENCYCHECK_IMAGE: thefriendlypirate/dependency-check:latest
+
+.sca:
+  before_script: []
+
+dependency-check:
+  stage: sca
+  extends: .sca
+  image: ${SEC_DEPENDENCYCHECK_IMAGE}
+  script:
+    - scan --from=gitlab-ci
+  allow_failure: true
+
+npm-audit:
+  stage: sca
+  extends: .sca
+  image: ${SEC_NODE_IMAGE}
+  script:
+    - scan --from=gitlab-ci
+  allow_failure: true
+  only:
+    variables:
+      - $PIPELINE_TYPE == "node"
+
+yarn-audit:
+  stage: sca
+  extends: .sca
+  image: ${SEC_NODE_IMAGE}
+  script:
+    - scan --from=gitlab-ci
+  allow_failure: true
+  only:
+    variables:
+      - $PIPELINE_TYPE == "node"
+
+safety:
+  stage: sca
+  extends: .sca
+  image: ${SEC_SAFETY_IMAGE}
+  script:
+    - scan --from=gitlab-ci
+  allow_failure: true
+  only:
+    variables:
+      - $PIPELINE_TYPE == "python"
+
+symfony-securitycheck:
+  stage: sca
+  extends: .sca
+  image: ${SEC_SYMFONYSECURITYCHECK_IMAGE}
+  script:
+    - scan --from=gitlab-ci
+  allow_failure: true
+  only:
+    variables:
+      - $PIPELINE_TYPE == "php"
+
+bundler-audit:
+  stage: sca
+  extends: .sca
+  image: ${SEC_BUNDLERAUDIT_IMAGE}
+  script:
+    - scan --from=gitlab-ci
+  allow_failure: true
+  only:
+    variables:
+      - $PIPELINE_TYPE == "ruby"

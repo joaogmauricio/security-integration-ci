@@ -1,0 +1,40 @@
+variables:
+  SEC_VERACODE_IMAGE: thefriendlypirate/veracode-scanner:latest
+  SEC_NODEJSSCAN_IMAGE: thefriendlypirate/nodejsscancli:latest
+  SEC_BANDIT_IMAGE: thefriendlypirate/bandit:latest
+
+.sast:
+  before_script: []
+
+veracode:
+  stage: sast
+  extends: .sast
+  image: ${SEC_VERACODE_IMAGE}
+  script:
+    - scan --from=gitlab-ci
+  allow_failure: true
+  only:
+    variables:
+      - $USE_VERACODE == "true" 
+
+nodejsscan:
+  stage: sast
+  extends: .sast
+  image: ${SEC_NODEJSSCAN_IMAGE}
+  script:
+    - scan --from=gitlab-ci
+  allow_failure: true
+  only:
+    variables:
+      - $PIPELINE_TYPE == "node" 
+
+bandit:
+  stage: sast
+  extends: .sast
+  image: ${SEC_BANDIT_IMAGE}
+  script:
+    - scan --from=gitlab-ci
+  allow_failure: true
+  only:
+    variables:
+      - $PIPELINE_TYPE == "python" 

@@ -1,0 +1,27 @@
+variables:
+  SEC_TRIVY_IMAGE: thefriendlypirate/trivy:latest
+  SEC_DOCKLE_IMAGE: thefriendlypirate/dockle:latest
+  DIND_IMAGE: docker:stable-dind
+
+.container-scanning:
+  before_script: []
+
+vulnerabilities:trivy:
+  stage: container-scanning
+  extends: .container-scanning
+  image: ${SEC_TRIVY_IMAGE}
+  services:
+    - ${DIND_IMAGE}
+  script:
+    - scan --from=gitlab-ci
+  allow_failure: true
+
+image-linting:dockle:
+  stage: container-scanning
+  extends: .container-scanning
+  image: ${SEC_DOCKLE_IMAGE}
+  services:
+    - ${DIND_IMAGE}
+  script:
+    - scan --from=gitlab-ci
+  allow_failure: true

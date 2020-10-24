@@ -1,0 +1,62 @@
+variables:
+  SEC_KUBELINT_IMAGE: thefriendlypirate/kubesec:latest
+  SEC_SSLLABSSCAN_IMAGE: thefriendlypirate/ssllabs-scan:latest
+  SEC_TESTSSL_IMAGE: thefriendlypirate/testssl:latest
+  SEC_SECURITYHEADERS_IMAGE: thefriendlypirate/securityheaders:latest
+  SEC_ZAPROXY_IMAGE: thefriendlypirate/zaproxy:latest
+  USE_ZAPROXY: "true"
+
+.dast:
+  before_script: []
+  
+kube-linting:kubesec:
+  stage: dast
+  extends: .dast
+  image: ${SEC_KUBELINT_IMAGE}
+  script:
+    - scan --from=gitlab-ci
+  allow_failure: true
+  only:
+    variables:
+      - $USE_KUBESEC == "true"
+
+ssl-check:ssllabsscan:
+  stage: dast
+  extends: .dast
+  image: ${SEC_SSLLABSSCAN_IMAGE}
+  script:
+    - scan --from=gitlab-ci
+  allow_failure: true
+  except:
+    variables:
+      - $NO_INTERNET == "true"
+
+ssl-check_offline:testssl:
+  stage: dast
+  extends: .dast
+  image: ${SEC_TESTSSL_IMAGE}
+  script:
+    - scan --from=gitlab-ci
+  allow_failure: true
+  only:
+    variables:
+      - $NO_INTERNET == "true"
+
+securityheaders:
+  stage: dast
+  extends: .dast
+  image: ${SEC_SECURITYHEADERS_IMAGE}
+  script:
+    - scan --from=gitlab-ci
+  allow_failure: true
+
+zaproxy:
+  stage: dast
+  extends: .dast
+  image: ${SEC_ZAPROXY_IMAGE}
+  script:
+    - scan --from=gitlab-ci
+  allow_failure: true
+  only:
+    variables:
+      - $USE_ZAPROXY == "true"
