@@ -1,0 +1,75 @@
+parameters:
+- name: useDependencyCheck
+  type: boolean
+  default: true
+- name: useSnyk
+  type: boolean
+  default: false
+- name: continueOnError
+  type: boolean
+  default: true
+
+stages:
+- stage: SCA
+  jobs:
+
+   - job: snyk
+     continueOnError: ${{ parameters.continueOnError }}
+     condition: eq(${{ parameters.useSnyk }}, true)
+     steps:
+     - script: scan --from=azure-devops
+       displayName: snyk
+     container: thefriendlypirate/snyk:azuredevops
+
+   - job: yarnaudit
+     continueOnError: ${{ parameters.continueOnError }}
+     condition: eq(variables.pipelineType, 'node')
+     steps:
+     - script: scan --from=azure-devops
+       displayName: yarnaudit
+     container: thefriendlypirate/node:azuredevops
+
+   - job: npmaudit
+     continueOnError: ${{ parameters.continueOnError }}
+     condition: eq(variables.pipelineType, 'node')
+     steps:
+     - script: scan --from=azure-devops
+       displayName: npmaudit
+     container: thefriendlypirate/node:azuredevops
+
+   - job: dependencycheck
+     continueOnError: ${{ parameters.continueOnError }}
+     condition: eq(${{ parameters.useDependencyCheck }}, true)
+     steps:
+     - script: |
+         npm i
+         sudo chown vsts_azpcontainer:azure_pipelines_sudo -R /dependency-check
+         scan --from=azure-devops
+       displayName: dependencycheck
+     container: thefriendlypirate/dependency-check:azuredevops
+
+   - job: safety
+     continueOnError: ${{ parameters.continueOnError }}
+     condition: eq(variables.pipelineType, 'python')
+     steps:
+     - script: scan --from=azure-devops
+       displayName: safety
+     container: thefriendlypirate/safety:azuredevops
+
+   - job: bundleraudit
+     continueOnError: ${{ parameters.continueOnError }}
+     condition: eq(variables.pipelineType, 'ruby')
+     steps:
+     - script: scan --from=azure-devops
+       displayName: bundleraudit
+     container: thefriendlypirate/bundler-audit:azuredevops
+
+   - job: symfonysecuritycheck
+     continueOnError: ${{ parameters.continueOnError }}
+     condition: eq(variables.pipelineType, 'php')
+     steps:
+     - script: |
+        sudo chown vsts_azpcontainer:azure_pipelines_sudo -R /root
+        scan --from=azure-devops
+       displayName: symfonysecuritycheck
+     container: thefriendlypirate/symfony-securitycheck:azuredevops

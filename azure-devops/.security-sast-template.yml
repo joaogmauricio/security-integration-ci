@@ -1,0 +1,62 @@
+parameters:
+- name: useVeracode
+  type: boolean
+  default: false
+- name: veracodeId
+  type: string
+  default: ""
+- name: veracodeKey
+  type: string
+  default: ""
+- name: veracodeSandboxname
+  type: string
+  default: ""
+- name: veracodeAppname
+  type: string
+  default: ""
+- name: veracodePackage
+  type: string
+  default: ""
+- name: veracodeScanversion
+  type: string
+  default: ""
+- name: continueOnError
+  type: boolean
+  default: true
+
+stages:
+- stage: SAST
+  jobs:
+
+  - job: veracode
+    # to pass it as env var
+    variables:
+      veracode.id: ${{ parameters.veracodeId }}
+      veracode.key: ${{ parameters.veracodeKey }}
+      veracode.sandboxname: ${{ parameters.veracodeSandboxname }}
+      veracode.appname: ${{ parameters.veracodeAppname }}
+      veracode.package: ${{ parameters.veracodePackage }}
+      ${{ if ne(parameters.veracodeScanversion, '') }}:
+        veracode.scanversion: ${{ parameters.veracodeScanversion }}
+    continueOnError: ${{ parameters.continueOnError }}
+    condition: eq(${{ parameters.useVeracode }}, true)
+    steps:
+    - script: scan --from=azure-devops
+      displayName: veracode
+    container: thefriendlypirate/veracode-scanner:azuredevops
+
+  - job: nodejsscan
+    continueOnError: ${{ parameters.continueOnError }}
+    condition: eq(variables.pipelineType, 'node')
+    steps:
+    - script: scan --from=azure-devops
+      displayName: nodejsscan
+    container: thefriendlypirate/nodejsscancli:azuredevops
+
+  - job: bandit
+    continueOnError: ${{ parameters.continueOnError }}
+    condition: eq(variables.pipelineType, 'python')
+    steps:
+    - script: scan --from=azure-devops
+      displayName: bandit
+    container: thefriendlypirate/bandit:azuredevops
